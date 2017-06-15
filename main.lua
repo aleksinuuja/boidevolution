@@ -4,6 +4,8 @@ function love.load()
 	math.randomseed(os.time())
 
 	UNIVERSESIZE = 5 -- factor to scale bg image with
+	timeScale = 1 -- number of updates before drawing
+
   bg = love.graphics.newImage("graphics/bigbg.jpg")
 
 	universe = {
@@ -53,10 +55,10 @@ function love.keypressed(key)
 end
 
 function love.draw()
-	gameStates[currentState].draw()
-	if not(currentSubState == "none") then -- if in substate, draw both main gamestate and substate
-		gameStates[currentSubState].draw()
-	end
+		gameStates[currentState].draw()
+		if not(currentSubState == "none") then -- if in substate, draw both main gamestate and substate
+			gameStates[currentSubState].draw()
+		end
 end
 
 function love.update(dt)

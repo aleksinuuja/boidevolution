@@ -16,7 +16,12 @@ function Boid:new(params)
 end
 
 function Boid:update(dt)
-  self.angle = self.angle + (math.random(200)-100)/1000
+  dt = dt * timeScale
+
+  -- insert steering here
+  self.angle = self.angle + ((math.random(200)-100)/10) * dt
+
+
   self.xspeed = math.cos(self.angle) * self.speed
   self.yspeed = math.sin(self.angle) * self.speed
   self.x = self.x + self.xspeed * dt

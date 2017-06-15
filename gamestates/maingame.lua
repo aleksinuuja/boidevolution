@@ -23,7 +23,7 @@ function gameStates.maingame.draw()
 
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
-  love.graphics.print("Current FPS: " .. tostring(currentFPS), 10, 10)
+  love.graphics.print("Current FPS: " .. tostring(currentFPS) .. ", Timescale: " .. tostring(timeScale) .. ", Boid count: " .. #boids, 10, 10)
 end
 
 
@@ -43,6 +43,10 @@ function gameStates.maingame.keypressed(key)
     s.isPaused = not(s.isPaused) -- switch pause on and off
   elseif key == "b" then
     table.insert(boids, Boid:new({x = math.random()*universe.width, y = math.random()*universe.height}))
+  elseif key == "z" then
+    if timeScale > 1 then timeScale = timeScale - 1 end
+  elseif key == "x" then
+    timeScale = timeScale + 1
   elseif key == "2" then
     local currentScale = tv("scale")
     if not(currentScale == love.graphics.getHeight() / universe.height) then
