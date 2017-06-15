@@ -3,7 +3,7 @@ require 'tween2'
 function love.load()
 	math.randomseed(os.time())
 
-	UNIVERSESIZE = 5 -- factor to scale bg image with
+	UNIVERSESIZE = 10 -- factor to scale bg image with
 	timeScale = 1 -- number of updates before drawing
 
   bg = love.graphics.newImage("graphics/bigbg.jpg")

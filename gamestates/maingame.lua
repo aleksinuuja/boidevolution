@@ -24,6 +24,7 @@ function gameStates.maingame.draw()
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
   love.graphics.print("Current FPS: " .. tostring(currentFPS) .. ", Timescale: " .. tostring(timeScale) .. ", Boid count: " .. #boids, 10, 10)
+  love.graphics.print("scrolloffsetX: " .. tostring(scrolloffsetX) .. ", scrolloffsetY: " .. tostring(scrolloffsetY), 10, 30)
 end
 
 
@@ -49,14 +50,10 @@ function gameStates.maingame.keypressed(key)
     timeScale = timeScale + 1
   elseif key == "2" then
     local currentScale = tv("scale")
-    if not(currentScale == love.graphics.getHeight() / universe.height) then
-      tweenEngine:createTween("scale", currentScale, 2, 0.5, easeOutQuint)
-    end
+    tweenEngine:createTween("scale", currentScale, 0.1, 0.5, easeOutQuint)
   elseif key == "1" then
     local currentScale = tv("scale")
-    if not(currentScale == love.graphics.getWidth() / universe.width) then
-      tweenEngine:createTween("scale", currentScale, love.graphics.getWidth() / universe.width, 0.5, easeOutQuint)
-    end
+    tweenEngine:createTween("scale", currentScale, love.graphics.getWidth() / universe.width, 0.5, easeOutQuint)
   end
 end
 
@@ -68,7 +65,8 @@ function gameStates.maingame.update(dt)
 
   if not s.isPaused then
     -- update camera position
-    calculateOffsets(universe.width/2, universe.height/2)
+--    centerCameraOffsets(universe.width/2, universe.height/2)
+    updateCameraOffsetsByMouse(love.mouse.getPosition())
 
     -- update boids:
   	local i, o
@@ -79,10 +77,48 @@ function gameStates.maingame.update(dt)
   end
 end
 
+function updateCameraOffsetsByMouse(x, y) -- gets x and y value from mouse
+  local screenwidth = (love.graphics.getWidth() / tv("scale")) -- how much of the universe is visible right now
+	local screenheight = (love.graphics.getHeight() / tv("scale"))
+  local scrollBoundary = 100
+  local scrollSpeed = 10
+  -- scrolling left
+  if (x < scrollBoundary and x >= 0) then
+    local edgeAccelerate = math.max(((scrollBoundary - x))-scrollBoundary/2, 0)
+    scrollSpeed = scrollSpeed + edgeAccelerate/2 -- faster scrolling closer to edge
+    scrolloffsetX = scrolloffsetX + scrollSpeed*5
+    if scrolloffsetX > 0 then scrolloffsetX = 0 end
+  end
+  -- scrolling right
+  if (x > (love.graphics.getWidth() - scrollBoundary) and x <= love.graphics.getWidth()) then
+    local edgeAccelerate = math.max(scrollBoundary - (love.graphics.getWidth() - x)-scrollBoundary/2, 0)
+    scrollSpeed = scrollSpeed + edgeAccelerate/2 -- faster scrolling closer to edge
+    scrolloffsetX = scrolloffsetX - scrollSpeed*5
+    -- scrolling right needs to stop when the right boundary of the universe is visible
+    -- this means we are visible width away from the rightboundary
+    if -scrolloffsetX > universe.width-screenwidth then scrolloffsetX = -(universe.width-screenwidth) end
+
+  end
+  -- scrolling up
+  if (y < scrollBoundary and y >= 0) then
+    local edgeAccelerate = math.max(((scrollBoundary - y))-scrollBoundary/2, 0)
+    scrollSpeed = scrollSpeed + edgeAccelerate/2 -- faster scrolling closer to edge
+    scrolloffsetY = scrolloffsetY + scrollSpeed*5
+    if scrolloffsetY > 0 then scrolloffsetY = 0 end
+  end
+  -- scrolling down
+  if (y > (love.graphics.getHeight() - scrollBoundary) and y <= love.graphics.getHeight()) then
+    local edgeAccelerate = math.max(scrollBoundary - (love.graphics.getHeight() - y)-scrollBoundary/2, 0)
+    scrollSpeed = scrollSpeed + edgeAccelerate/2 -- faster scrolling closer to edge
+    scrolloffsetY = scrolloffsetY - scrollSpeed*5
+    if -scrolloffsetY > universe.height-screenheight then scrolloffsetY = -(universe.height-screenheight) end
+  end
+
+end
 
 -- center camera to x, y by calculating correct scrolloffset
 -- except when close to universe boundaries
-function calculateOffsets(x, y)
+function centerCameraOffsets(x, y)
 
 	local screenwidth = (love.graphics.getWidth() / tv("scale"))
 	local screenheight = (love.graphics.getHeight() / tv("scale"))
