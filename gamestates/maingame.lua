@@ -19,7 +19,7 @@ function gameStates.maingame.draw()
   -- draw background image which is as large as the game universe
   love.graphics.draw(bg, 0, 0, 0, UNIVERSESIZE, UNIVERSESIZE)
 
-  -- drawBoids()
+  drawBoids()
 
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
@@ -41,11 +41,12 @@ end
 function gameStates.maingame.keypressed(key)
   if key == "space" then
     s.isPaused = not(s.isPaused) -- switch pause on and off
-
+  elseif key == "b" then
+    table.insert(boids, Boid:new({x = math.random()*universe.width, y = math.random()*universe.height}))
   elseif key == "2" then
     local currentScale = tv("scale")
     if not(currentScale == love.graphics.getHeight() / universe.height) then
-      tweenEngine:createTween("scale", currentScale, love.graphics.getHeight() / universe.height, 0.5, easeOutQuint)
+      tweenEngine:createTween("scale", currentScale, 2, 0.5, easeOutQuint)
     end
   elseif key == "1" then
     local currentScale = tv("scale")
@@ -128,6 +129,4 @@ function s.resetGame()
 	scrolloffsetY = 0
 
 	boids = {}
-  table.insert(boids, Boid:new({x=0,y=0}))
-
 end

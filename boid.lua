@@ -7,6 +7,7 @@ function Boid:new(params)
   o.y = params.y
   o.xspeed = 0
   o.yspeed = 0
+  o.speed = 1000
   o.sprite = love.graphics.newImage("graphics/boid1.png")
 
   setmetatable(o, self)
@@ -15,15 +16,25 @@ function Boid:new(params)
 end
 
 function Boid:update(dt)
-	self.x = self.x + self.xspeed * dt
+  self.angle = self.angle + (math.random(200)-100)/1000
+  self.xspeed = math.cos(self.angle) * self.speed
+  self.yspeed = math.sin(self.angle) * self.speed
+  self.x = self.x + self.xspeed * dt
   self.y = self.y + self.yspeed * dt
-  self.angle = math.atan2(self.yspeed, self.xspeed)
 
-  -- universe boundaries
-  if self.x < 40 then self.xspeed = 1  end
-  if self.x > universe.width-40 then self.xspeed = -1  end
-  if self.y < 40  then self.yspeed = 1 end
-  if self.y > universe.height-40 then self.yspeed = -1 end
+  -- universe boundaries - WRAP AROUND
+  if self.x < -80 then
+    self.x = self.x+(universe.width+80)
+  end
+  if self.x > universe.width+80 then
+    self.x = self.x-(universe.width+80)
+  end
+  if self.y < -80  then
+    self.y = self.y+(universe.height+80)
+  end
+  if self.y > universe.height+80 then
+    self.y = self.y-(universe.height+80)
+  end
 end
 
 function Boid:draw()
