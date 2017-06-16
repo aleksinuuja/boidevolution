@@ -5,6 +5,7 @@ s.isInitiated = false
 require "boid"
 require "slider"
 require "inspector"
+-- require "rule"  TO BE DONE
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -38,6 +39,9 @@ function s.resetGame()
     x = 1000,
     y = 200
   })
+
+  rules = {}
+
 end
 
 function gameStates.maingame.draw()
