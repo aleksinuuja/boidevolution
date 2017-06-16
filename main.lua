@@ -54,6 +54,22 @@ function love.keypressed(key)
 	end
 end
 
+function love.mousepressed(x, y, button)
+	if currentSubState == "none" then
+		gameStates[currentState].mousepressed(x, y, button)
+	else -- if in substate, it overrides key input from main gamestate
+		gameStates[currentSubState].mousepressed(x, y, button)
+	end
+end
+
+function love.mousereleased(x, y, button)
+	if currentSubState == "none" then
+		gameStates[currentState].mousereleased(x, y, button)
+	else -- if in substate, it overrides key input from main gamestate
+		gameStates[currentSubState].mousereleased(x, y, button)
+	end
+end
+
 function love.draw()
 		gameStates[currentState].draw()
 		if not(currentSubState == "none") then -- if in substate, draw both main gamestate and substate

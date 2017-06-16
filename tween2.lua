@@ -50,7 +50,7 @@ function Tween:createTween(keyName, startValue, targetValue, duration, func)
   local alreadyTweening = false
   for i = 1, #self.Tweens do
     if self.Tweens[i].key == keyName then
---      print("ALREADY TWEENING! keyName = " .. keyName)
+      print("ALREADY TWEENING! keyName = " .. keyName)
       alreadyTweening = true
     end
   end

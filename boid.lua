@@ -10,6 +10,8 @@ function Boid:new(params)
   o.speed = 1000
   o.sprite = love.graphics.newImage("graphics/boid1.png")
 
+  o.isSelected = false
+
   setmetatable(o, self)
   self.__index = self
   return o
@@ -43,6 +45,18 @@ function Boid:update(dt)
 end
 
 function Boid:draw()
+  -- draw a shadow for fun (first so it's on bottom)
+  love.graphics.setColor(0, 0, 0)
+  love.graphics.draw(self.sprite, self.x+150, self.y+150, self.angle-math.pi/2, 1, 1, 70, 93)
+
+  -- if boid is selected draw a circle around it
+  if self.isSelected then
+    love.graphics.setColor(0, 200, 0)
+    love.graphics.setLineWidth(2/tv("scale"))
+    love.graphics.circle("line", self.x, self.y, 160)
+  end
+
   love.graphics.setColor(255, 255, 255)
-  love.graphics.draw(self.sprite, self.x, self.y, self.angle-math.pi/2, 1, 1, 70, 93)
+  love.graphics.draw(self.sprite, self.x, self.y, self.angle-math.pi/2, 1, 1, self.sprite:getWidth()/2, self.sprite:getHeight()/2)
+
 end
