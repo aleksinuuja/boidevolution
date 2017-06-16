@@ -4,6 +4,7 @@ s.isInitiated = false
 
 require "boid"
 require "slider"
+require "inspector"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -17,6 +18,7 @@ function s.resetGame()
 
 	boids = {}
   selectedBoid = 0
+  isFollowingSelectedBoid = true
 
   timeScaleSlider = Slider:new({
     x = 600,
@@ -32,6 +34,10 @@ function s.resetGame()
     valuesUpTo = 20
   })
 
+  inspector = Inspector:new({
+    x = 1000,
+    y = 200
+  })
 end
 
 function gameStates.maingame.draw()
@@ -51,7 +57,9 @@ function gameStates.maingame.draw()
   love.graphics.pop()
   timeScaleSlider:draw()
   zoomSlider:draw()
+  inspector:draw()
 
+  love.graphics.setColor(255, 255, 255)
   love.graphics.print("Current FPS: " .. tostring(currentFPS) .. ", Timescale: "
     .. tostring(timeScale) .. ", Boid count: " .. #boids
     .. ", SCALE: " .. tweenEngine:returnValue("scale"), 10, 10)
@@ -65,11 +73,6 @@ function drawBoids()
 		end
 end
 
-function drawOverlay() -- not called at all at least not yet
-  love.graphics.setColor(0, 0, 0, 150)
-  love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-end
-
 function gameStates.maingame.mousepressed(x, y, button)
   if button == 1 then
     -- timeScaleSlider dragging
@@ -79,24 +82,53 @@ function gameStates.maingame.mousepressed(x, y, button)
       timeScaleSlider.dragging.active = true
       timeScaleSlider.dragging.diffX = x - timeScaleSlider.rect.x
       timeScaleSlider.dragging.diffY = y - timeScaleSlider.rect.y
-
     -- zoomSlider dragging
-    else if x > zoomSlider.rect.x and x < zoomSlider.rect.x + zoomSlider.rect.width
+    elseif x > zoomSlider.rect.x and x < zoomSlider.rect.x + zoomSlider.rect.width
     and y > zoomSlider.rect.y and y < zoomSlider.rect.y + zoomSlider.rect.height
     then
       zoomSlider.dragging.active = true
       zoomSlider.dragging.diffX = x - zoomSlider.rect.x
       zoomSlider.dragging.diffY = y - zoomSlider.rect.y
-    else -- not clicked on slider, so this is select boids
-      print("clicked but not on slider")
+    -- inspector close button
+    elseif x > inspector.close.x and x < inspector.close.x + inspector.close.width
+    and y > inspector.close.y and y < inspector.close.y + inspector.close.height
+    then
+      inspector.isVisible = false
+    -- inspector next button
+    elseif x > inspector.next.x and x < inspector.next.x + inspector.next.width
+    and y > inspector.next.y and y < inspector.next.y + inspector.next.height
+    then
+      if selectedBoid > 0 then
+        boids[selectedBoid].isSelected = false
+        selectedBoid = selectedBoid + 1
+        if selectedBoid > #boids then selectedBoid = 1 end
+        boids[selectedBoid].isSelected = true
+      end
+    -- inspector prev button
+    elseif x > inspector.prev.x and x < inspector.prev.x + inspector.prev.width
+    and y > inspector.prev.y and y < inspector.prev.y + inspector.prev.height
+    then
+      if selectedBoid > 0 then
+        boids[selectedBoid].isSelected = false
+        selectedBoid = selectedBoid - 1
+        if selectedBoid == 0 then selectedBoid = #boids end
+        boids[selectedBoid].isSelected = true
+      end
+    -- inspector dragging
+    elseif x > inspector.x and x < inspector.x + inspector.width
+    and y > inspector.y and y < inspector.y + 30
+    then
+      inspector.dragging.active = true
+      inspector.dragging.diffX = x - inspector.x
+      inspector.dragging.diffY = y - inspector.y
+    else -- not clicked on any draggable, so this is select boids
       local c = selectClosestBoid(x, y)
-      print("closest boid index is " .. c)
       if c > 0 then
         if selectedBoid > 0 then boids[selectedBoid].isSelected = false end
         boids[c].isSelected = true
+        inspector.isVisible = true
         selectedBoid = c
       end
-    end
     end
   end
 end
@@ -127,6 +159,7 @@ function gameStates.maingame.mousereleased(x, y, button)
     -- reset dragging for all sliders
     timeScaleSlider.dragging.active = false
     zoomSlider.dragging.active = false
+    inspector.dragging.active = false
   end
 end
 
@@ -155,9 +188,14 @@ function gameStates.maingame.update(dt)
     zoomSlider:update()
     tweenEngine:setValue("scale", (zoomSlider.value-1)/100 + love.graphics.getWidth() / universe.width)
 
+    inspector:update()
+
     -- update camera position
---    centerCameraOffsets(universe.width/2, universe.height/2)
-    updateCameraOffsetsByMouse(love.mouse.getPosition())
+    if isFollowingSelectedBoid and selectedBoid > 0 then
+      centerCameraOffsets(boids[selectedBoid].x, boids[selectedBoid].y)
+    else
+      updateCameraOffsetsByMouse(love.mouse.getPosition())
+    end
 
     -- update boids:
   	local i, o
