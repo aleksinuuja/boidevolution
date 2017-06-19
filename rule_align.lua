@@ -1,20 +1,17 @@
 function rule_align(boid, myIndex)
   local returnVector = {x=0, y=0}
+  local count = 1
 
-
-  -- find the "center of mass" that is the average of x coordinates and y coordinates
+  -- find the average speed of other mates
   for i, o in ipairs(boids) do
-    if i ~= myIndex then
+    if i ~= myIndex and boid.race == o.race then
+      count = count + 1
       returnVector.x = returnVector.x + o.xspeed
       returnVector.y = returnVector.y + o.yspeed
     end
   end
-  returnVector.x = returnVector.x / #boids
-  returnVector.y = returnVector.y / #boids
-
-  -- compare own location to center to find vector towards center
-  returnVector.x = returnVector.x - boid.xspeed
-  returnVector.y = returnVector.y - boid.yspeed
+  returnVector.x = returnVector.x / count
+  returnVector.y = returnVector.y / count
 
   return returnVector
 end

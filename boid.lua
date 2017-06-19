@@ -5,6 +5,7 @@ require "rule_towardsFlockCenter"
 require "rule_keepDistance"
 require "rule_align"
 require "rule_avertMouse"
+require "rule_avertEnemies"
 
 function Boid:new(params)
   o = {}
@@ -21,8 +22,12 @@ function Boid:new(params)
   o.gene_rule_random = 0
   o.gene_rule_towardsFlockCenter = 0.6
   o.gene_rule_keepDistance = 10
-  o.gene_rule_align = 1
+  o.gene_rule_align = 0.2
   o.gene_rule_avertMouse = 10
+  o.gene_rule_avertEnemies = 1
+
+  o.race = math.random(4)
+  print(o.race)
 
   setmetatable(o, self)
   self.__index = self
@@ -57,6 +62,10 @@ function Boid:update(dt, myIndex)
   speedVector = rule_avertMouse(self, myIndex)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_avertMouse * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_avertMouse * dt
+
+  speedVector = rule_avertEnemies(self, myIndex)
+  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_avertEnemies * dt
+  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_avertEnemies * dt
 
   -- limiting speed to a max without affecting direction - it's like FRICTION
   local velocity = math.sqrt(self.xspeed*self.xspeed + self.yspeed*self.yspeed)
@@ -99,7 +108,15 @@ function Boid:draw()
     love.graphics.circle("line", self.x, self.y, 160)
   end
 
-  love.graphics.setColor(255, 255, 255)
+  if self.race == 1 then
+    love.graphics.setColor(200, 50, 150)
+  elseif self.race == 2 then
+    love.graphics.setColor(200, 200, 0)
+  elseif self.race == 3 then
+    love.graphics.setColor(0, 50, 150)
+  else
+    love.graphics.setColor(0, 200, 0)
+  end
   love.graphics.draw(self.sprite, self.x, self.y, self.angle-math.pi/2, 1, 1, self.sprite:getWidth()/2, self.sprite:getHeight()/2)
 
 end
