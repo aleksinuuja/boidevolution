@@ -40,8 +40,6 @@ function s.resetGame()
     y = 200
   })
 
-  rules = {}
-
 end
 
 function gameStates.maingame.draw()
@@ -209,7 +207,7 @@ function gameStates.maingame.update(dt)
     -- update boids:
   	local i, o
   	for i, o in ipairs(boids) do
-  		o:update(dt)
+  		o:update(dt, i)
   		if o.removeMe then table.remove(boids, i) end
   	end
   end

@@ -2,28 +2,34 @@ Boid = {}
 
 require "rule_random"
 require "rule_towardsFlockCenter"
+require "rule_keepDistance"
+require "rule_align"
+require "rule_avertMouse"
 
 function Boid:new(params)
   o = {}
   o.angle = 0 -- direction as radians (2*pi is 360 degrees), zero is towards right
   o.x = params.x
   o.y = params.y
-  o.speed = 10
+  o.speed = 100
   o.xspeed = math.cos(o.angle)*o.speed
   o.yspeed = math.sin(o.angle)*o.speed
   o.sprite = love.graphics.newImage("graphics/boid1.png")
 
   o.isSelected = false
 
-  o.gene_rule_random = 500
-  o.gene_rule_towardsFlockCenter = 0.1
+  o.gene_rule_random = 0
+  o.gene_rule_towardsFlockCenter = 0.6
+  o.gene_rule_keepDistance = 10
+  o.gene_rule_align = 1
+  o.gene_rule_avertMouse = 10
 
   setmetatable(o, self)
   self.__index = self
   return o
 end
 
-function Boid:update(dt)
+function Boid:update(dt, myIndex)
   dt = dt * timeScale
 
   -- insert steering here:
@@ -36,9 +42,31 @@ function Boid:update(dt)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_random * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_random * dt
 
-  speedVector = rule_towardsFlockCenter(self)
+  speedVector = rule_towardsFlockCenter(self, myIndex)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_towardsFlockCenter * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_towardsFlockCenter * dt
+
+  speedVector = rule_keepDistance(self, myIndex)
+  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_keepDistance * dt
+  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_keepDistance * dt
+
+  speedVector = rule_align(self, myIndex)
+  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_align * dt
+  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_align * dt
+
+  speedVector = rule_avertMouse(self, myIndex)
+  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_avertMouse * dt
+  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_avertMouse * dt
+
+  -- limiting speed to a max without affecting direction - it's like FRICTION
+  local velocity = math.sqrt(self.xspeed*self.xspeed + self.yspeed*self.yspeed)
+  if velocity > FrictionLimitVelocity then
+    local unitVector = {x=self.xspeed/velocity, y=self.yspeed/velocity}
+    local speeding = velocity - FrictionLimitVelocity -- how much over
+    local frictionVector = {x = -1*unitVector.x*speeding, y = -1*unitVector.y*speeding}
+    self.xspeed = self.xspeed + frictionVector.x * FrictionMultiplier * dt
+    self.yspeed = self.yspeed + frictionVector.y * FrictionMultiplier * dt
+  end
 
   self.x = self.x + self.xspeed * dt
   self.y = self.y + self.yspeed * dt

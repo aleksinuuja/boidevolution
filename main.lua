@@ -4,7 +4,10 @@ function love.load()
 	math.randomseed(os.time())
 
 	UNIVERSESIZE = 10 -- factor to scale bg image with
+	FrictionMultiplier = 1
+	FrictionLimitVelocity = 100
 	timeScale = 1 -- number of updates before drawing
+
 
   bg = love.graphics.newImage("graphics/bigbg.jpg")
 
