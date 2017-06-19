@@ -1,17 +1,23 @@
 Boid = {}
 
+require "rule_random"
+require "rule_towardsFlockCenter"
+
 function Boid:new(params)
   o = {}
   o.angle = 0 -- direction as radians (2*pi is 360 degrees), zero is towards right
   o.x = params.x
   o.y = params.y
-  o.xspeed = 0
-  o.yspeed = 0
-  o.speed = 1000
+  o.speed = 10
+  o.xspeed = math.cos(o.angle)*o.speed
+  o.yspeed = math.sin(o.angle)*o.speed
   o.sprite = love.graphics.newImage("graphics/boid1.png")
 
   o.isSelected = false
-  
+
+  o.gene_rule_random = 500
+  o.gene_rule_towardsFlockCenter = 0.1
+
   setmetatable(o, self)
   self.__index = self
   return o
@@ -21,16 +27,22 @@ function Boid:update(dt)
   dt = dt * timeScale
 
   -- insert steering here:
-  -- go through all Rules and call them with corresponding gene value as parameter
+  -- go through all Rules and call them with self as parameter
   -- get back a speed speedVector and sum it cumulatively
   -- angle needs then to be calculated from the sum vector
-  self.angle = self.angle + ((math.random(200)-100)/10) * dt
+  local speedVector = {x=0, y=0}
 
+  speedVector = rule_random(self)
+  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_random * dt
+  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_random * dt
 
-  self.xspeed = math.cos(self.angle) * self.speed
-  self.yspeed = math.sin(self.angle) * self.speed
+  speedVector = rule_towardsFlockCenter(self)
+  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_towardsFlockCenter * dt
+  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_towardsFlockCenter * dt
+
   self.x = self.x + self.xspeed * dt
   self.y = self.y + self.yspeed * dt
+  self.angle = math.atan2(self.yspeed, self.xspeed)
 
   -- universe boundaries - WRAP AROUND
   if self.x < -80 then

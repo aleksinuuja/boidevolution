@@ -25,7 +25,7 @@ function s.resetGame()
     x = 600,
     y = 10,
     width = 100,
-    valuesUpTo = 10
+    valuesUpTo = 100
   })
 
   zoomSlider = Slider:new({
@@ -170,8 +170,8 @@ end
 function gameStates.maingame.keypressed(key)
   if key == "space" then
     s.isPaused = not(s.isPaused) -- switch pause on and off
-  elseif key == "b" then
-    table.insert(boids, Boid:new({x = math.random()*universe.width, y = math.random()*universe.height}))
+--  elseif key == "b" then
+--    table.insert(boids, Boid:new({x = math.random()*universe.width, y = math.random()*universe.height}))
   elseif key == "z" then
     if timeScale > 1 then timeScale = timeScale - 1 end
   elseif key == "x" then
@@ -186,6 +186,11 @@ function gameStates.maingame.update(dt)
   end
 
   if not s.isPaused then
+    if love.keyboard.isDown("b") then
+      table.insert(boids, Boid:new({x = math.random()*universe.width, y = math.random()*universe.height}))
+    end
+
+
     timeScaleSlider:update()
     timeScale = timeScaleSlider.value
 
