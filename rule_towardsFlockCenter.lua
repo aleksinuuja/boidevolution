@@ -1,5 +1,5 @@
 function rule_towardsFlockCenter(boid, myIndex)
-  local count = 1
+  local count = 0
   local returnVector = {x=0, y=0}
 
   -- find the "center of mass" that is the average of x coordinates and y coordinates
@@ -10,8 +10,10 @@ function rule_towardsFlockCenter(boid, myIndex)
       returnVector.y = returnVector.y + o.y
     end
   end
-  returnVector.x = returnVector.x / count
-  returnVector.y = returnVector.y / count
+  if count > 0 then
+    returnVector.x = returnVector.x / count
+    returnVector.y = returnVector.y / count
+  end
 
   -- compare own location to center to find vector towards center
   returnVector.x = returnVector.x - boid.x

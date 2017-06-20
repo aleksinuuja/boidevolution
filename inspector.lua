@@ -81,7 +81,16 @@ function Inspector:draw()
 
     -- show selected boid
     if selectedBoid > 0 then
-      love.graphics.setColor(255, 255, 255)
+      local race = boids[selectedBoid].race
+      if race == 1 then
+        love.graphics.setColor(200, 50, 150)
+      elseif race == 2 then
+        love.graphics.setColor(200, 200, 0)
+      elseif race == 3 then
+        love.graphics.setColor(50, 50, 250)
+      else
+        love.graphics.setColor(0, 200, 0)
+      end
       love.graphics.draw(boids[selectedBoid].sprite, self.x+self.width/2, self.y+self.height-40, boids[selectedBoid].angle-math.pi/2, 0.25, 0.25, boids[selectedBoid].sprite:getWidth()/2, boids[selectedBoid].sprite:getHeight()/2)
 
       -- show text: boid name and stats

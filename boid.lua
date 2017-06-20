@@ -22,12 +22,19 @@ function Boid:new(params)
   o.gene_rule_random = 0
   o.gene_rule_towardsFlockCenter = 0.6
   o.gene_rule_keepDistance = 10
-  o.gene_rule_align = 0.2
+  o.gene_rule_align = 1
   o.gene_rule_avertMouse = 10
-  o.gene_rule_avertEnemies = 1
+  o.gene_rule_avertEnemies = 10
+
+
+  -- o.gene_rule_random = 0
+  -- o.gene_rule_towardsFlockCenter = 0.6
+  -- o.gene_rule_keepDistance = 10
+  -- o.gene_rule_align = 1
+  -- o.gene_rule_avertMouse = 10
+  -- o.gene_rule_avertEnemies = 1
 
   o.race = math.random(4)
-  print(o.race)
 
   setmetatable(o, self)
   self.__index = self
@@ -35,8 +42,6 @@ function Boid:new(params)
 end
 
 function Boid:update(dt, myIndex)
-  dt = dt * timeScale
-
   -- insert steering here:
   -- go through all Rules and call them with self as parameter
   -- get back a speed speedVector and sum it cumulatively
@@ -97,10 +102,6 @@ function Boid:update(dt, myIndex)
 end
 
 function Boid:draw()
-  -- draw a shadow for fun (first so it's on bottom)
-  love.graphics.setColor(0, 0, 0)
-  love.graphics.draw(self.sprite, self.x+150, self.y+150, self.angle-math.pi/2, 1, 1, 70, 93)
-
   -- if boid is selected draw a circle around it
   if self.isSelected then
     love.graphics.setColor(0, 200, 0)
@@ -113,10 +114,15 @@ function Boid:draw()
   elseif self.race == 2 then
     love.graphics.setColor(200, 200, 0)
   elseif self.race == 3 then
-    love.graphics.setColor(0, 50, 150)
+    love.graphics.setColor(50, 50, 250)
   else
     love.graphics.setColor(0, 200, 0)
   end
   love.graphics.draw(self.sprite, self.x, self.y, self.angle-math.pi/2, 1, 1, self.sprite:getWidth()/2, self.sprite:getHeight()/2)
 
+end
+function Boid:drawShadow()
+  -- draw a shadow for fun (first so it's on bottom)
+  love.graphics.setColor(0, 0, 0)
+  love.graphics.draw(self.sprite, self.x+150, self.y+150, self.angle-math.pi/2, 1, 1, 70, 93)
 end

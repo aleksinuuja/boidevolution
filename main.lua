@@ -4,10 +4,9 @@ function love.load()
 	math.randomseed(os.time())
 
 	UNIVERSESIZE = 10 -- factor to scale bg image with
-	FrictionMultiplier = 1
+	FrictionMultiplier = 5
 	FrictionLimitVelocity = 100
 	timeScale = 1 -- number of updates before drawing
-
 
   bg = love.graphics.newImage("graphics/bigbg.jpg")
 
@@ -86,11 +85,13 @@ function love.update(dt)
 	if currentFPS < lowestFPS then lowestFPS = currentFPS end
 	if currentFPS > highestFPS then highestFPS = currentFPS end
 
-	tweenEngine:update(dt)
-
 	timeInState = love.timer.getTime() - stateTimeStamp
-	gameStates[currentState].update(dt)
-	if not(currentSubState == "none") then -- if in substate, update both main gamestate and substate
-		gameStates[currentSubState].update(dt)
+
+	for i=1,timeScale do -- call update as many times as timeScale
+		tweenEngine:update(dt)
+		gameStates[currentState].update(dt)
+		if not(currentSubState == "none") then -- if in substate, update both main gamestate and substate
+			gameStates[currentSubState].update(dt)
+		end
 	end
 end

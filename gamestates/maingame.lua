@@ -71,6 +71,9 @@ end
 
 function drawBoids()
 		for i, o in ipairs(boids) do
+			o:drawShadow()
+		end
+    for i, o in ipairs(boids) do
 			o:draw()
 		end
 end
