@@ -19,22 +19,23 @@ function Boid:new(params)
 
   o.isSelected = false
 
-  o.gene_rule_random = 0
-  o.gene_rule_towardsFlockCenter = 0.6
-  o.gene_rule_keepDistance = 10
-  o.gene_rule_align = 1
-  o.gene_rule_avertMouse = 10
-  o.gene_rule_avertEnemies = 10
-
+  o.gene_rule_random = params.gene_rule_random
+  o.gene_rule_towardsFlockCenter = params.gene_rule_towardsFlockCenter
+  o.gene_rule_keepDistance = params.gene_rule_keepDistance
+  o.gene_rule_align = params.gene_rule_align
+  o.gene_rule_avertEnemies = params.gene_rule_avertEnemies
+  o.gene_rule_keepDistance_distance = params.gene_rule_keepDistance_distance
+  o.gene_rule_avertEnemies_distance = params.gene_rule_avertEnemies_distance
 
   -- o.gene_rule_random = 0
   -- o.gene_rule_towardsFlockCenter = 0.6
   -- o.gene_rule_keepDistance = 10
-  -- o.gene_rule_align = 1
-  -- o.gene_rule_avertMouse = 10
+  -- o.gene_rule_align = 1 -- if too high boids fly to hell (wait max speed friction is not working)
   -- o.gene_rule_avertEnemies = 1
 
-  o.race = math.random(4)
+  o.gene_rule_avertMouse = 10
+
+  o.race = params.race
 
   setmetatable(o, self)
   self.__index = self
@@ -56,7 +57,7 @@ function Boid:update(dt, myIndex)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_towardsFlockCenter * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_towardsFlockCenter * dt
 
-  speedVector = rule_keepDistance(self, myIndex)
+  speedVector = rule_keepDistance(self, myIndex, self.gene_rule_keepDistance_distance)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_keepDistance * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_keepDistance * dt
 
@@ -68,7 +69,7 @@ function Boid:update(dt, myIndex)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_avertMouse * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_avertMouse * dt
 
-  speedVector = rule_avertEnemies(self, myIndex)
+  speedVector = rule_avertEnemies(self, myIndex, self.gene_rule_avertEnemies_distance)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_avertEnemies * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_avertEnemies * dt
 

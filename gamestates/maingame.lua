@@ -25,7 +25,7 @@ function s.resetGame()
     x = 600,
     y = 10,
     width = 100,
-    valuesUpTo = 100
+    valuesUpTo = 40
   })
 
   zoomSlider = Slider:new({
@@ -39,6 +39,19 @@ function s.resetGame()
     x = 1000,
     y = 200
   })
+
+  randomGeneProfile = {}
+  for i=1,4 do
+    table.insert(randomGeneProfile, {
+      gene_rule_random = math.random()*10,
+      gene_rule_towardsFlockCenter = math.random(),
+      gene_rule_keepDistance = math.random()*10,
+      gene_rule_align = math.random(),
+      gene_rule_avertEnemies = (math.random()*2-1)/10, -- range -1 to 1
+      gene_rule_keepDistance_distance = math.random()*1000 + 50,
+      gene_rule_avertEnemies_distance = math.random()*5000 + 50
+    })
+  end
 
 end
 
@@ -70,9 +83,9 @@ end
 
 
 function drawBoids()
-		for i, o in ipairs(boids) do
-			o:drawShadow()
-		end
+		-- for i, o in ipairs(boids) do
+		-- 	o:drawShadow()
+		-- end
     for i, o in ipairs(boids) do
 			o:draw()
 		end
@@ -188,7 +201,18 @@ function gameStates.maingame.update(dt)
 
   if not s.isPaused then
     if love.keyboard.isDown("b") then
-      table.insert(boids, Boid:new({x = math.random()*universe.width, y = math.random()*universe.height}))
+      local race = math.random(4)
+      table.insert(boids, Boid:new({
+        race = race,
+        gene_rule_random = randomGeneProfile[race].gene_rule_random,
+        gene_rule_towardsFlockCenter = randomGeneProfile[race].gene_rule_towardsFlockCenter,
+        gene_rule_keepDistance = randomGeneProfile[race].gene_rule_keepDistance,
+        gene_rule_align = randomGeneProfile[race].gene_rule_align,
+        gene_rule_avertEnemies = randomGeneProfile[race].gene_rule_avertEnemies,
+        gene_rule_keepDistance_distance = randomGeneProfile[race].gene_rule_keepDistance_distance,
+        gene_rule_avertEnemies_distance = randomGeneProfile[race].gene_rule_avertEnemies_distance,
+        x = math.random()*universe.width,
+        y = math.random()*universe.height}))
     end
 
 
