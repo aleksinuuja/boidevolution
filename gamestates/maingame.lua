@@ -3,9 +3,10 @@ s = gameStates.maingame -- short ref to maingame state
 s.isInitiated = false
 
 require "boid"
+require "foodbit"
 require "slider"
 require "inspector"
--- require "rule"  TO BE DONE
+require "foodticker"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -20,6 +21,8 @@ function s.resetGame()
 	boids = {}
   selectedBoid = 0
   isFollowingSelectedBoid = true
+
+  foodBits = {}
 
   timeScaleSlider = Slider:new({
     x = 600,
@@ -49,11 +52,29 @@ function s.resetGame()
       gene_rule_align = math.random(),
       gene_rule_avertEnemies = (math.random()*2-1)/10, -- range -1 to 1
       gene_rule_keepDistance_distance = math.random()*1000 + 50,
-      gene_rule_avertEnemies_distance = math.random()*5000 + 50
+      gene_rule_avertEnemies_distance = math.random()*5000 + 50,
+      gene_rule_searchFood = math.random(),
+      gene_rule_searchFood_distance = math.random()*2000 + 50
     })
   end
 
+  MaxFoodBits = 2000
+
+  function createFood()
+    if #foodBits < MaxFoodBits then
+      local xr = math.random()*universe.width
+      local yr = math.random()*universe.height
+      table.insert(foodBits, FoodBit:new({
+        x = xr,
+        y = yr
+      }))
+    end
+  end
+  foodTicker = FoodTicker:new({ tickFunction = createFood })
+  for i=1,500 do createFood() end -- initial food on the map
+
 end
+
 
 function gameStates.maingame.draw()
   -- first draw zoomable game graphics
@@ -67,6 +88,7 @@ function gameStates.maingame.draw()
   love.graphics.draw(bg, 0, 0, 0, UNIVERSESIZE, UNIVERSESIZE)
 
   drawBoids()
+  drawFoodBits()
 
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
@@ -77,17 +99,24 @@ function gameStates.maingame.draw()
   love.graphics.setColor(255, 255, 255)
   love.graphics.print("Current FPS: " .. tostring(currentFPS) .. ", Timescale: "
     .. tostring(timeScale) .. ", Boid count: " .. #boids
-    .. ", SCALE: " .. tweenEngine:returnValue("scale"), 10, 10)
+    .. ", SCALE: " .. tweenEngine:returnValue("scale")
+    .. ", #foodBits: " .. #foodBits, 10, 10)
   love.graphics.print("scrolloffsetX: " .. tostring(scrolloffsetX) .. ", scrolloffsetY: " .. tostring(scrolloffsetY), 10, 30)
 end
 
 
 function drawBoids()
-		-- for i, o in ipairs(boids) do
-		-- 	o:drawShadow()
-		-- end
+		for i, o in ipairs(boids) do
+		  o:drawShadow()
+		end
     for i, o in ipairs(boids) do
 			o:draw()
+		end
+end
+
+function drawFoodBits()
+		for i, o in ipairs(foodBits) do
+      o:draw()
 		end
 end
 
@@ -112,6 +141,8 @@ function gameStates.maingame.mousepressed(x, y, button)
     and y > inspector.close.y and y < inspector.close.y + inspector.close.height
     then
       inspector.isVisible = false
+      if selectedBoid > 0 then boids[selectedBoid].isSelected = false end
+      isFollowingSelectedBoid = false
     -- inspector next button
     elseif x > inspector.next.x and x < inspector.next.x + inspector.next.width
     and y > inspector.next.y and y < inspector.next.y + inspector.next.height
@@ -146,6 +177,7 @@ function gameStates.maingame.mousepressed(x, y, button)
         boids[c].isSelected = true
         inspector.isVisible = true
         selectedBoid = c
+        isFollowingSelectedBoid = true
       end
     end
   end
@@ -153,8 +185,8 @@ end
 
 -- returns the boids-array index of the closest boid
 function selectClosestBoid(x, y)
-  x = x / tv("scale")
-  y = y / tv("scale")
+  x = x / tv("scale") - scrolloffsetX
+  y = y / tv("scale") - scrolloffsetY
   local i, o, deltaX, deltaY, distance
   -- start from high value to find lowest value
   local smallestDistance = math.sqrt(universe.width*universe.width + universe.height*universe.height)
@@ -211,6 +243,8 @@ function gameStates.maingame.update(dt)
         gene_rule_avertEnemies = randomGeneProfile[race].gene_rule_avertEnemies,
         gene_rule_keepDistance_distance = randomGeneProfile[race].gene_rule_keepDistance_distance,
         gene_rule_avertEnemies_distance = randomGeneProfile[race].gene_rule_avertEnemies_distance,
+        gene_rule_searchFood = randomGeneProfile[race].gene_rule_searchFood,
+        gene_rule_searchFood_distance = randomGeneProfile[race].gene_rule_searchFood_distance,
         x = math.random()*universe.width,
         y = math.random()*universe.height}))
     end
@@ -223,6 +257,7 @@ function gameStates.maingame.update(dt)
     tweenEngine:setValue("scale", (zoomSlider.value-1)/100 + love.graphics.getWidth() / universe.width)
 
     inspector:update()
+    foodTicker:update()
 
     -- update camera position
     if isFollowingSelectedBoid and selectedBoid > 0 then
@@ -231,13 +266,49 @@ function gameStates.maingame.update(dt)
       updateCameraOffsetsByMouse(love.mouse.getPosition())
     end
 
-    -- update boids:
   	local i, o
+    -- update boids:
   	for i, o in ipairs(boids) do
   		o:update(dt, i)
-  		if o.removeMe then table.remove(boids, i) end
+  		if o.removeMe then
+        if i == selectedBoid then
+          selectedBoid = 0
+          isFollowingSelectedBoid = false
+          inspector.isVisible = false
+        elseif i < selectedBoid then
+          selectedBoid = selectedBoid -1
+        end -- bug fix: update index of selected boid
+        table.remove(boids, i)
+      end
   	end
+    -- update foodBits:
+  	for i, o in ipairs(foodBits) do
+  		o:update()
+--  		if o.removeMe then table.remove(foodBits, i) end
+  	end
+
+    -- check collisions
+    -- boids hitting food
+    for i, boid in ipairs(boids) do
+      for j, foodBit in ipairs(foodBits) do
+        if CheckCollision(boid.x-50, boid.y-50, 100, 100, foodBit.x, foodBit.y, 50, 50) then
+          table.remove(foodBits, j)
+          boid.age = boid.age - 50
+        end
+      end
+    end
   end
+end
+
+-- Collision detection taken function from http://love2d.org/wiki/BoundingBox.lua
+-- Returns true if two boxes overlap, false if they don't
+-- x1,y1 are the left-top coords of the first box, while w1,h1 are its width and height
+-- x2,y2,w2 & h2 are the same, but for the second box
+function CheckCollision(x1,y1,w1,h1, x2,y2,w2,h2)
+  return x1 < x2+w2 and
+         x2 < x1+w1 and
+         y1 < y2+h2 and
+         y2 < y1+h1
 end
 
 function updateCameraOffsetsByMouse(x, y) -- gets x and y value from mouse

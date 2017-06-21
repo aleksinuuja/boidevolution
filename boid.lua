@@ -1,11 +1,12 @@
 Boid = {}
 
-require "rule_random"
-require "rule_towardsFlockCenter"
-require "rule_keepDistance"
-require "rule_align"
-require "rule_avertMouse"
-require "rule_avertEnemies"
+require "rules/rule_random"
+require "rules/rule_towardsFlockCenter"
+require "rules/rule_keepDistance"
+require "rules/rule_align"
+require "rules/rule_avertMouse"
+require "rules/rule_avertEnemies"
+require "rules/rule_searchFood"
 
 function Boid:new(params)
   o = {}
@@ -16,8 +17,16 @@ function Boid:new(params)
   o.xspeed = math.cos(o.angle)*o.speed
   o.yspeed = math.sin(o.angle)*o.speed
   o.sprite = love.graphics.newImage("graphics/boid1.png")
+  o.race = params.race
+
+  o.birthStamp = love.timer.getTime()
+  o.age = 0
+  o.lastStamp = love.timer.getTime()
+  o.tickDuration = 0.5 -- aging ticker
+
 
   o.isSelected = false
+  o.removeMe = false
 
   o.gene_rule_random = params.gene_rule_random
   o.gene_rule_towardsFlockCenter = params.gene_rule_towardsFlockCenter
@@ -26,16 +35,21 @@ function Boid:new(params)
   o.gene_rule_avertEnemies = params.gene_rule_avertEnemies
   o.gene_rule_keepDistance_distance = params.gene_rule_keepDistance_distance
   o.gene_rule_avertEnemies_distance = params.gene_rule_avertEnemies_distance
+  o.gene_rule_searchFood = params.gene_rule_searchFood
+  o.gene_rule_searchFood_distance = params.gene_rule_searchFood_distance
 
-  -- o.gene_rule_random = 0
-  -- o.gene_rule_towardsFlockCenter = 0.6
-  -- o.gene_rule_keepDistance = 10
-  -- o.gene_rule_align = 1 -- if too high boids fly to hell (wait max speed friction is not working)
-  -- o.gene_rule_avertEnemies = 1
+  --  o.gene_rule_random = 0
+  --  o.gene_rule_towardsFlockCenter = 0
+  --  o.gene_rule_keepDistance = 0
+  --  o.gene_rule_align = 0 -- if too high boids fly to hell (wait max speed friction is not working)
+  --  o.gene_rule_avertEnemies = 0
+  --  o.gene_rule_keepDistance_distance = 100
+  --  o.gene_rule_avertEnemies_distance = 100
+  --  o.gene_rule_searchFood = 1
+  --  o.gene_rule_searchFood_distance = 1000
 
-  o.gene_rule_avertMouse = 10
+  o.gene_rule_avertMouse = 0
 
-  o.race = params.race
 
   setmetatable(o, self)
   self.__index = self
@@ -43,10 +57,16 @@ function Boid:new(params)
 end
 
 function Boid:update(dt, myIndex)
-  -- insert steering here:
-  -- go through all Rules and call them with self as parameter
-  -- get back a speed speedVector and sum it cumulatively
-  -- angle needs then to be calculated from the sum vector
+  -- aging and death
+  local timeElapsed = love.timer.getTime() - self.lastStamp
+  if timeElapsed > (self.tickDuration/timeScale) then
+    self.lastStamp = love.timer.getTime()
+    -- call tick function now
+    self.age = self.age + 1
+    if self.age > 100 then self.removeMe = true end
+  end
+
+  -- steering:
   local speedVector = {x=0, y=0}
 
   speedVector = rule_random(self)
@@ -72,6 +92,10 @@ function Boid:update(dt, myIndex)
   speedVector = rule_avertEnemies(self, myIndex, self.gene_rule_avertEnemies_distance)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_avertEnemies * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_avertEnemies * dt
+
+  speedVector = rule_searchFood(self, myIndex, self.gene_rule_searchFood_distance)
+  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_searchFood * dt
+  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_searchFood * dt
 
   -- limiting speed to a max without affecting direction - it's like FRICTION
   local velocity = math.sqrt(self.xspeed*self.xspeed + self.yspeed*self.yspeed)

@@ -13,11 +13,12 @@ function rule_towardsFlockCenter(boid, myIndex)
   if count > 0 then
     returnVector.x = returnVector.x / count
     returnVector.y = returnVector.y / count
+
+    -- compare own location to center to find vector towards center
+    returnVector.x = returnVector.x - boid.x
+    returnVector.y = returnVector.y - boid.y
   end
 
-  -- compare own location to center to find vector towards center
-  returnVector.x = returnVector.x - boid.x
-  returnVector.y = returnVector.y - boid.y
 
   return returnVector
 end
