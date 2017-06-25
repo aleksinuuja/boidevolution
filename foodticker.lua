@@ -3,7 +3,7 @@ FoodTicker = {}
 function FoodTicker:new(params)
   o = {}
   o.lastStamp = love.timer.getTime()
-  o.tickDuration = 0.5 -- seconds
+  o.tickDuration = 0.3 -- seconds
   o.tickFunction = params.tickFunction
 
   setmetatable(o, self)

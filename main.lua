@@ -6,6 +6,8 @@ function love.load()
 	UNIVERSESIZE = 10 -- factor to scale bg image with
 	FrictionMultiplier = 5
 	FrictionLimitVelocity = 100
+	BoidMaxEnergy = 1000
+
 	timeScale = 1 -- number of updates before drawing
 
   bg = love.graphics.newImage("graphics/bigbg.jpg")

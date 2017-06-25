@@ -7,6 +7,7 @@ require "rules/rule_align"
 require "rules/rule_avertMouse"
 require "rules/rule_avertEnemies"
 require "rules/rule_searchFood"
+require "rules/rule_searchEggs"
 
 function Boid:new(params)
   o = {}
@@ -21,6 +22,7 @@ function Boid:new(params)
 
   o.birthStamp = love.timer.getTime()
   o.age = 0
+  o.energy = 100
   o.lastStamp = love.timer.getTime()
   o.tickDuration = 0.5 -- aging ticker
 
@@ -37,19 +39,22 @@ function Boid:new(params)
   o.gene_rule_avertEnemies_distance = params.gene_rule_avertEnemies_distance
   o.gene_rule_searchFood = params.gene_rule_searchFood
   o.gene_rule_searchFood_distance = params.gene_rule_searchFood_distance
+  o.gene_rule_searchEggs = params.gene_rule_searchEggs
+  o.gene_rule_searchEggs_distance = params.gene_rule_searchEggs_distance
 
-  --  o.gene_rule_random = 0
-  --  o.gene_rule_towardsFlockCenter = 0
-  --  o.gene_rule_keepDistance = 0
-  --  o.gene_rule_align = 0 -- if too high boids fly to hell (wait max speed friction is not working)
-  --  o.gene_rule_avertEnemies = 0
-  --  o.gene_rule_keepDistance_distance = 100
-  --  o.gene_rule_avertEnemies_distance = 100
-  --  o.gene_rule_searchFood = 1
-  --  o.gene_rule_searchFood_distance = 1000
+  -- o.gene_rule_random = 0
+  -- o.gene_rule_towardsFlockCenter = 0
+  -- o.gene_rule_keepDistance = 0
+  -- o.gene_rule_align = 0 -- if too high boids fly to hell (wait max speed friction is not working)
+  -- o.gene_rule_avertEnemies = 0
+  -- o.gene_rule_keepDistance_distance = 100
+  -- o.gene_rule_avertEnemies_distance = 100
+  -- o.gene_rule_searchFood = 1
+  -- o.gene_rule_searchFood_distance = 1000
+  -- o.gene_rule_searchEggs = 2
+  -- o.gene_rule_searchEggs_distance = 10000
 
   o.gene_rule_avertMouse = 0
-
 
   setmetatable(o, self)
   self.__index = self
@@ -63,13 +68,22 @@ function Boid:update(dt, myIndex)
     self.lastStamp = love.timer.getTime()
     -- call tick function now
     self.age = self.age + 1
-    if self.age > 100 then self.removeMe = true end
+    self.energy = self.energy - 1
+    if self.energy < 1 then self.removeMe = true end
+  end
+
+  -- laying eggs, takes 100 energy
+  local diceRoll = math.random(1000)
+  if diceRoll == 1 and self.energy > 150 then
+    createEgg(self.x, self.y, self.race)
+    self.energy = self.energy - 100
   end
 
   -- steering:
   local speedVector = {x=0, y=0}
 
   speedVector = rule_random(self)
+  local m = getRuleMultiplier(gene_rule_random_range, self.gene_rule_random)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_random * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_random * dt
 
@@ -96,6 +110,10 @@ function Boid:update(dt, myIndex)
   speedVector = rule_searchFood(self, myIndex, self.gene_rule_searchFood_distance)
   self.xspeed = self.xspeed + speedVector.x * self.gene_rule_searchFood * dt
   self.yspeed = self.yspeed + speedVector.y * self.gene_rule_searchFood * dt
+
+  speedVector = rule_searchEggs(self, myIndex, self.gene_rule_searchEggs_distance)
+  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_searchEggs * dt
+  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_searchEggs * dt
 
   -- limiting speed to a max without affecting direction - it's like FRICTION
   local velocity = math.sqrt(self.xspeed*self.xspeed + self.yspeed*self.yspeed)

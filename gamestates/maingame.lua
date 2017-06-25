@@ -4,9 +4,11 @@ s.isInitiated = false
 
 require "boid"
 require "foodbit"
+require "egg"
 require "slider"
 require "inspector"
 require "foodticker"
+require "rulepercentages"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -23,6 +25,7 @@ function s.resetGame()
   isFollowingSelectedBoid = true
 
   foodBits = {}
+  eggs = {}
 
   timeScaleSlider = Slider:new({
     x = 600,
@@ -43,22 +46,28 @@ function s.resetGame()
     y = 200
   })
 
-  randomGeneProfile = {}
-  for i=1,4 do
-    table.insert(randomGeneProfile, {
-      gene_rule_random = math.random()*10,
-      gene_rule_towardsFlockCenter = math.random(),
-      gene_rule_keepDistance = math.random()*10,
-      gene_rule_align = math.random(),
-      gene_rule_avertEnemies = (math.random()*2-1)/10, -- range -1 to 1
-      gene_rule_keepDistance_distance = math.random()*1000 + 50,
-      gene_rule_avertEnemies_distance = math.random()*5000 + 50,
-      gene_rule_searchFood = math.random(),
-      gene_rule_searchFood_distance = math.random()*2000 + 50
-    })
-  end
+  -- gene value ranges, low - high - normal
+  gene_rule_random_range = {lo=0, hi=10, no=0} -- range 0-10
+  gene_rule_towardsFlockCenter_range = {lo=0, hi=2, no=0.6} -- range 0-2
+  gene_rule_keepDistance_range = {lo=0, hi=2, no=1} -- range 0-2
+  gene_rule_keepDistance_distance_range = {lo=100, hi=2500, no=1000} -- range 100-2500
+  gene_rule_align_range = {lo=0, hi=2, no=1} -- range 0-2
+  gene_rule_avertEnemies_range = {lo=-2, hi=2, no=0.2} -- range -2 - 2
+  gene_rule_avertEnemies_distance_range = {lo=100, hi=5000, no=1000} -- range 100-5000
+  gene_rule_searchFood_range = {lo=0, hi=2, no=0.5} -- range 0-2
+  gene_rule_searchFood_distance_range = {lo=100, hi=5000, no=1000} -- range 100-5000
+  gene_rule_searchEggs_range = {lo=0, hi=2, no=0} -- range 0-2
+  gene_rule_searchEggs_distance_range = {lo=100, hi=5000, no=2000} -- range 100-5000
 
   MaxFoodBits = 2000
+
+  function createEgg(x, y, race)
+    table.insert(eggs, Egg:new({
+      race = race,
+      x = x,
+      y = y
+    }))
+  end
 
   function createFood()
     if #foodBits < MaxFoodBits then
@@ -71,8 +80,7 @@ function s.resetGame()
     end
   end
   foodTicker = FoodTicker:new({ tickFunction = createFood })
-  for i=1,500 do createFood() end -- initial food on the map
-
+  for i=1,1000 do createFood() end -- initial food on the map
 end
 
 
@@ -89,6 +97,7 @@ function gameStates.maingame.draw()
 
   drawBoids()
   drawFoodBits()
+  drawEggs()
 
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
@@ -116,6 +125,12 @@ end
 
 function drawFoodBits()
 		for i, o in ipairs(foodBits) do
+      o:draw()
+		end
+end
+
+function drawEggs()
+		for i, o in ipairs(eggs) do
       o:draw()
 		end
 end
@@ -236,15 +251,17 @@ function gameStates.maingame.update(dt)
       local race = math.random(4)
       table.insert(boids, Boid:new({
         race = race,
-        gene_rule_random = randomGeneProfile[race].gene_rule_random,
-        gene_rule_towardsFlockCenter = randomGeneProfile[race].gene_rule_towardsFlockCenter,
-        gene_rule_keepDistance = randomGeneProfile[race].gene_rule_keepDistance,
-        gene_rule_align = randomGeneProfile[race].gene_rule_align,
-        gene_rule_avertEnemies = randomGeneProfile[race].gene_rule_avertEnemies,
-        gene_rule_keepDistance_distance = randomGeneProfile[race].gene_rule_keepDistance_distance,
-        gene_rule_avertEnemies_distance = randomGeneProfile[race].gene_rule_avertEnemies_distance,
-        gene_rule_searchFood = randomGeneProfile[race].gene_rule_searchFood,
-        gene_rule_searchFood_distance = randomGeneProfile[race].gene_rule_searchFood_distance,
+        gene_rule_random = getNormalValueAsPercentage(gene_rule_random_range),
+        gene_rule_towardsFlockCenter = gene_rule_towardsFlockCenter_range.no,
+        gene_rule_keepDistance = gene_rule_keepDistance_range.no,
+        gene_rule_align = gene_rule_align_range.no,
+        gene_rule_avertEnemies = gene_rule_avertEnemies_range.no,
+        gene_rule_keepDistance_distance = gene_rule_keepDistance_distance_range.no,
+        gene_rule_avertEnemies_distance = gene_rule_avertEnemies_distance_range.no,
+        gene_rule_searchFood = gene_rule_searchFood_range.no,
+        gene_rule_searchFood_distance = gene_rule_searchFood_distance_range.no,
+        gene_rule_searchEggs = gene_rule_searchEggs_range.no,
+        gene_rule_searchEggs_distance = gene_rule_searchEggs_distance_range.no,
         x = math.random()*universe.width,
         y = math.random()*universe.height}))
     end
@@ -284,7 +301,11 @@ function gameStates.maingame.update(dt)
     -- update foodBits:
   	for i, o in ipairs(foodBits) do
   		o:update()
---  		if o.removeMe then table.remove(foodBits, i) end
+  	end
+    -- update foodBits:
+  	for i, o in ipairs(eggs) do
+  		o:update()
+  		if o.removeMe then table.remove(eggs, i) end
   	end
 
     -- check collisions
@@ -293,11 +314,26 @@ function gameStates.maingame.update(dt)
       for j, foodBit in ipairs(foodBits) do
         if CheckCollision(boid.x-50, boid.y-50, 100, 100, foodBit.x, foodBit.y, 50, 50) then
           table.remove(foodBits, j)
-          boid.age = boid.age - 50
+          boid.energy = boid.energy + 50
+          if boid.energy > BoidMaxEnergy then boid.energy = BoidMaxEnergy end
         end
       end
     end
-  end
+
+    -- boids hitting eggs
+    for i, boid in ipairs(boids) do
+      for j, egg in ipairs(eggs) do
+        if CheckCollision(boid.x-50, boid.y-50, 100, 100, egg.x, egg.y, 50, 50) then
+          if boid.race ~= egg.race then
+            table.remove(eggs, j)
+            boid.energy = boid.energy + 100
+            if boid.energy > BoidMaxEnergy then boid.energy = BoidMaxEnergy end
+          end
+        end
+      end
+    end
+
+  end -- is not paused
 end
 
 -- Collision detection taken function from http://love2d.org/wiki/BoundingBox.lua

@@ -11,6 +11,13 @@ function rule_keepDistance(boid, myIndex, dist)
         returnVector.x = returnVector.x - (o.x - boid.x)
         returnVector.y = returnVector.y - (o.y - boid.y)
       end
+
+      -- if super close, push always more strongly
+      if distanceFromSelf < 40 then
+        returnVector.x = returnVector.x - (o.x - boid.x)*2000
+        returnVector.y = returnVector.y - (o.y - boid.y)*2000
+      end
+
     end
   end
   return returnVector

@@ -31,7 +31,7 @@ function Inspector:new(params)
   local font = love.graphics.newFont("graphics/Krungthep.ttf", self.textsize)
   o.text = love.graphics.newText(font, "")
 
-  o.isVisible = true
+  o.isVisible = false
   o.dragging = { active = false, diffX = 0, diffY = 0 }
 
   setmetatable(o, self)
@@ -91,17 +91,21 @@ function Inspector:draw()
       else
         love.graphics.setColor(0, 200, 0)
       end
-      love.graphics.draw(boids[selectedBoid].sprite, self.x+self.width/2, self.y+self.height-40, boids[selectedBoid].angle-math.pi/2, 0.25, 0.25, boids[selectedBoid].sprite:getWidth()/2, boids[selectedBoid].sprite:getHeight()/2)
+      love.graphics.draw(boids[selectedBoid].sprite, self.x+self.width/2, self.y+64, boids[selectedBoid].angle-math.pi/2, 0.25, 0.25, boids[selectedBoid].sprite:getWidth()/2, boids[selectedBoid].sprite:getHeight()/2)
 
       -- show text: boid name and stats
       self.text:clear()
       local stringToShow = "Selected Boid > " .. selectedBoid .. "\n"
-      for bar=1,10 do
-        stringToShow = stringToShow .. "\n\nGene " .. bar .. ": XX"
-      end
+      stringToShow = stringToShow .. "\n\nAge: " .. boids[selectedBoid].age .. " ticks"
+      stringToShow = stringToShow .. "\n\nEnergy: " .. boids[selectedBoid].energy
+
+      stringToShow = stringToShow .. "\n\nGene for random rule: " .. boids[selectedBoid].gene_rule_random
+      stringToShow = stringToShow .. "\n\nBut if i get multiplier with that I get: " .. getRuleMultiplier(gene_rule_random_range, boids[selectedBoid].gene_rule_random)
+
+
       local foo = self.text:set(stringToShow)
       love.graphics.setColor(0, 200, 0)
-      love.graphics.draw(self.text, self.x+5, self.y + 50)
+      love.graphics.draw(self.text, self.x+5, self.y + 100)
     end
 
   end
