@@ -46,7 +46,7 @@ function s.resetGame()
     y = 200
   })
 
-  -- gene value ranges, low - high - normal
+  -- -- gene value ranges, low - high - normal
   gene_rule_random_range = {lo=0, hi=10, no=0} -- range 0-10
   gene_rule_towardsFlockCenter_range = {lo=0, hi=2, no=0.6} -- range 0-2
   gene_rule_keepDistance_range = {lo=0, hi=2, no=1} -- range 0-2
@@ -56,16 +56,37 @@ function s.resetGame()
   gene_rule_avertEnemies_distance_range = {lo=100, hi=5000, no=1000} -- range 100-5000
   gene_rule_searchFood_range = {lo=0, hi=2, no=0.5} -- range 0-2
   gene_rule_searchFood_distance_range = {lo=100, hi=5000, no=1000} -- range 100-5000
-  gene_rule_searchEggs_range = {lo=0, hi=2, no=0} -- range 0-2
+  gene_rule_searchEggs_range = {lo=0, hi=2, no=0.5} -- range 0-2
   gene_rule_searchEggs_distance_range = {lo=100, hi=5000, no=2000} -- range 100-5000
+
 
   MaxFoodBits = 2000
 
-  function createEgg(x, y, race)
+  function createEgg(parent)
+    -- this is where the magic happens
+    -- the egg genes get random mutations
+
+    local i
+    local mutations = {}
+    for i=1,11 do
+      table.insert(mutations, math.random(3)-2) -- now every mutation is -1, 0 or +1
+    end
+
     table.insert(eggs, Egg:new({
-      race = race,
-      x = x,
-      y = y
+      gene_rule_random = parent.gene_rule_random + mutations[1],
+      gene_rule_towardsFlockCenter = parent.gene_rule_towardsFlockCenter + mutations[2],
+      gene_rule_keepDistance = parent.gene_rule_keepDistance + mutations[3],
+      gene_rule_align = parent.gene_rule_align + mutations[4],
+      gene_rule_avertEnemies = parent.gene_rule_avertEnemies + mutations[5],
+      gene_rule_keepDistance_distance = parent.gene_rule_keepDistance_distance + mutations[6],
+      gene_rule_avertEnemies_distance = parent.gene_rule_avertEnemies_distance + mutations[7],
+      gene_rule_searchFood = parent.gene_rule_searchFood + mutations[8],
+      gene_rule_searchFood_distance = parent.gene_rule_searchFood_distance + mutations[9],
+      gene_rule_searchEggs = parent.gene_rule_searchEggs + mutations[10],
+      gene_rule_searchEggs_distance = parent.gene_rule_searchEggs_distance + mutations[11],
+      race = parent.race,
+      x = parent.x,
+      y = parent.y
     }))
   end
 
@@ -251,17 +272,17 @@ function gameStates.maingame.update(dt)
       local race = math.random(4)
       table.insert(boids, Boid:new({
         race = race,
-        gene_rule_random = getNormalValueAsPercentage(gene_rule_random_range),
-        gene_rule_towardsFlockCenter = gene_rule_towardsFlockCenter_range.no,
-        gene_rule_keepDistance = gene_rule_keepDistance_range.no,
-        gene_rule_align = gene_rule_align_range.no,
-        gene_rule_avertEnemies = gene_rule_avertEnemies_range.no,
-        gene_rule_keepDistance_distance = gene_rule_keepDistance_distance_range.no,
-        gene_rule_avertEnemies_distance = gene_rule_avertEnemies_distance_range.no,
-        gene_rule_searchFood = gene_rule_searchFood_range.no,
-        gene_rule_searchFood_distance = gene_rule_searchFood_distance_range.no,
-        gene_rule_searchEggs = gene_rule_searchEggs_range.no,
-        gene_rule_searchEggs_distance = gene_rule_searchEggs_distance_range.no,
+        gene_rule_random = getNormalValueAsPercentage(gene_rule_random_range, true),
+        gene_rule_towardsFlockCenter = getNormalValueAsPercentage(gene_rule_towardsFlockCenter_range, true),
+        gene_rule_keepDistance = getNormalValueAsPercentage(gene_rule_keepDistance_range, true),
+        gene_rule_align = getNormalValueAsPercentage(gene_rule_align_range, true),
+        gene_rule_avertEnemies = getNormalValueAsPercentage(gene_rule_avertEnemies_range, true),
+        gene_rule_keepDistance_distance = getNormalValueAsPercentage(gene_rule_keepDistance_distance_range, true),
+        gene_rule_avertEnemies_distance = getNormalValueAsPercentage(gene_rule_avertEnemies_distance_range, true),
+        gene_rule_searchFood = getNormalValueAsPercentage(gene_rule_searchFood_range, true),
+        gene_rule_searchFood_distance = getNormalValueAsPercentage(gene_rule_searchFood_distance_range, true),
+        gene_rule_searchEggs = getNormalValueAsPercentage(gene_rule_searchEggs_range, true),
+        gene_rule_searchEggs_distance = getNormalValueAsPercentage(gene_rule_searchEggs_distance_range, true),
         x = math.random()*universe.width,
         y = math.random()*universe.height}))
     end

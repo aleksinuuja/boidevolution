@@ -10,6 +10,18 @@ function Egg:new(params)
   o.lastStamp = love.timer.getTime()
   o.tickDuration = 0.5 -- countDown ticker
 
+  o.gene_rule_random = params.gene_rule_random
+  o.gene_rule_towardsFlockCenter = params.gene_rule_towardsFlockCenter
+  o.gene_rule_keepDistance = params.gene_rule_keepDistance
+  o.gene_rule_align = params.gene_rule_align
+  o.gene_rule_avertEnemies = params.gene_rule_avertEnemies
+  o.gene_rule_keepDistance_distance = params.gene_rule_keepDistance_distance
+  o.gene_rule_avertEnemies_distance = params.gene_rule_avertEnemies_distance
+  o.gene_rule_searchFood = params.gene_rule_searchFood
+  o.gene_rule_searchFood_distance = params.gene_rule_searchFood_distance
+  o.gene_rule_searchEggs = params.gene_rule_searchEggs
+  o.gene_rule_searchEggs_distance = params.gene_rule_searchEggs_distance
+
   setmetatable(o, self)
   self.__index = self
   return o
@@ -35,17 +47,17 @@ function Egg:update(dt, myIndex)
       local race = self.race
       table.insert(boids, Boid:new({
         race = race,
-        gene_rule_random = gene_rule_random_range.no,
-        gene_rule_towardsFlockCenter = gene_rule_towardsFlockCenter_range.no,
-        gene_rule_keepDistance = gene_rule_keepDistance_range.no,
-        gene_rule_align = gene_rule_align_range.no,
-        gene_rule_avertEnemies = gene_rule_avertEnemies_range.no,
-        gene_rule_keepDistance_distance = gene_rule_keepDistance_distance_range.no,
-        gene_rule_avertEnemies_distance = gene_rule_avertEnemies_distance_range.no,
-        gene_rule_searchFood = gene_rule_searchFood_range.no,
-        gene_rule_searchFood_distance = gene_rule_searchFood_distance_range.no,
-        gene_rule_searchEggs = gene_rule_searchEggs_range.no,
-        gene_rule_searchEggs_distance = gene_rule_searchEggs_distance_range.no,
+        gene_rule_random = self.gene_rule_random,
+        gene_rule_towardsFlockCenter = self.gene_rule_towardsFlockCenter,
+        gene_rule_keepDistance = self.gene_rule_keepDistance,
+        gene_rule_align = self.gene_rule_align,
+        gene_rule_avertEnemies = self.gene_rule_avertEnemies,
+        gene_rule_keepDistance_distance = self.gene_rule_keepDistance_distance,
+        gene_rule_avertEnemies_distance = self.gene_rule_avertEnemies_distance,
+        gene_rule_searchFood = self.gene_rule_searchFood,
+        gene_rule_searchFood_distance = self.gene_rule_searchFood_distance,
+        gene_rule_searchEggs = self.gene_rule_searchEggs,
+        gene_rule_searchEggs_distance = self.gene_rule_searchEggs_distance,
         x = self.x,
         y = self.y}))
     end

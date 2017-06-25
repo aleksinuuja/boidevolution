@@ -14,7 +14,7 @@ function Boid:new(params)
   o.angle = 0 -- direction as radians (2*pi is 360 degrees), zero is towards right
   o.x = params.x
   o.y = params.y
-  o.speed = 100
+  o.speed = 0
   o.xspeed = math.cos(o.angle)*o.speed
   o.yspeed = math.sin(o.angle)*o.speed
   o.sprite = love.graphics.newImage("graphics/boid1.png")
@@ -75,45 +75,67 @@ function Boid:update(dt, myIndex)
   -- laying eggs, takes 100 energy
   local diceRoll = math.random(1000)
   if diceRoll == 1 and self.energy > 150 then
-    createEgg(self.x, self.y, self.race)
+    createEgg(self, self.x, self.y, self.race)
     self.energy = self.energy - 100
   end
 
   -- steering:
   local speedVector = {x=0, y=0}
 
+  print("next is rule random")
   speedVector = rule_random(self)
-  local m = getRuleMultiplier(gene_rule_random_range, self.gene_rule_random)
-  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_random * dt
-  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_random * dt
+  local m = getRuleMultiplier(gene_rule_random_range, self.gene_rule_random, true)
+  self.xspeed = self.xspeed + speedVector.x * m * dt
+  self.yspeed = self.yspeed + speedVector.y * m * dt
 
+  print("next is rule towardsFlockCenter")
   speedVector = rule_towardsFlockCenter(self, myIndex)
-  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_towardsFlockCenter * dt
-  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_towardsFlockCenter * dt
+  m = getRuleMultiplier(gene_rule_towardsFlockCenter_range, self.gene_rule_towardsFlockCenter, true)
+  self.xspeed = self.xspeed + speedVector.x * m * dt
+  self.yspeed = self.yspeed + speedVector.y * m * dt
 
-  speedVector = rule_keepDistance(self, myIndex, self.gene_rule_keepDistance_distance)
-  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_keepDistance * dt
-  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_keepDistance * dt
+  print("next is rule keepDistance")
+  local distance = getRuleMultiplier(gene_rule_keepDistance_distance_range, self.gene_rule_keepDistance_distance, false)
+  speedVector = rule_keepDistance(self, myIndex, distance)
+  m = getRuleMultiplier(gene_rule_keepDistance_range, self.gene_rule_keepDistance, true)
+  self.xspeed = self.xspeed + speedVector.x * m * dt
+  self.yspeed = self.yspeed + speedVector.y * m * dt
 
+  print("next is rule align")
   speedVector = rule_align(self, myIndex)
-  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_align * dt
-  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_align * dt
+  m = getRuleMultiplier(gene_rule_align_range, self.gene_rule_align, true)
+  self.xspeed = self.xspeed + speedVector.x * m * dt
+  self.yspeed = self.yspeed + speedVector.y * m * dt
 
+--[[
   speedVector = rule_avertMouse(self, myIndex)
-  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_avertMouse * dt
-  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_avertMouse * dt
+  m = getRuleMultiplier(gene_rule_avertMouse_range, self.gene_rule_avertMouse)
+  print(5)
+  self.xspeed = self.xspeed + speedVector.x * m * dt
+  self.yspeed = self.yspeed + speedVector.y * m * dt
+  ]]--
 
-  speedVector = rule_avertEnemies(self, myIndex, self.gene_rule_avertEnemies_distance)
-  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_avertEnemies * dt
-  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_avertEnemies * dt
+  print("next is rule avertEnemies")
+  distance = getRuleMultiplier(gene_rule_avertEnemies_distance_range, self.gene_rule_avertEnemies_distance, false)
+  speedVector = rule_avertEnemies(self, myIndex, distance)
+  m = getRuleMultiplier(gene_rule_avertEnemies_range, self.gene_rule_avertEnemies, true)
+  self.xspeed = self.xspeed + speedVector.x * m * dt
+  self.yspeed = self.yspeed + speedVector.y * m * dt
 
-  speedVector = rule_searchFood(self, myIndex, self.gene_rule_searchFood_distance)
-  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_searchFood * dt
-  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_searchFood * dt
+  print("next is rule searchFood")
+  distance = getRuleMultiplier(gene_rule_searchFood_distance_range, self.gene_rule_searchFood_distance, false)
+  speedVector = rule_searchFood(self, myIndex, distance)
+  m = getRuleMultiplier(gene_rule_searchFood_range, self.gene_rule_searchFood, true)
+  self.xspeed = self.xspeed + speedVector.x * m * dt
+  self.yspeed = self.yspeed + speedVector.y * m * dt
 
-  speedVector = rule_searchEggs(self, myIndex, self.gene_rule_searchEggs_distance)
-  self.xspeed = self.xspeed + speedVector.x * self.gene_rule_searchEggs * dt
-  self.yspeed = self.yspeed + speedVector.y * self.gene_rule_searchEggs * dt
+  print("next is rule searchEggs")
+  distance = getRuleMultiplier(gene_rule_searchEggs_distance_range, self.gene_rule_searchEggs_distance, false)
+  speedVector = rule_searchEggs(self, myIndex, distance)
+  m = getRuleMultiplier(gene_rule_searchEggs_range, self.gene_rule_searchEggs, true)
+  self.xspeed = self.xspeed + speedVector.x * m * dt
+  self.yspeed = self.yspeed + speedVector.y * m * dt
+
 
   -- limiting speed to a max without affecting direction - it's like FRICTION
   local velocity = math.sqrt(self.xspeed*self.xspeed + self.yspeed*self.yspeed)

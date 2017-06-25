@@ -99,8 +99,18 @@ function Inspector:draw()
       stringToShow = stringToShow .. "\n\nAge: " .. boids[selectedBoid].age .. " ticks"
       stringToShow = stringToShow .. "\n\nEnergy: " .. boids[selectedBoid].energy
 
-      stringToShow = stringToShow .. "\n\nGene for random rule: " .. boids[selectedBoid].gene_rule_random
-      stringToShow = stringToShow .. "\n\nBut if i get multiplier with that I get: " .. getRuleMultiplier(gene_rule_random_range, boids[selectedBoid].gene_rule_random)
+      -- TODO: these should show CHANGE against normal values
+      stringToShow = stringToShow .. "\n\nrandom: " ..boids[selectedBoid].gene_rule_random
+      stringToShow = stringToShow .. "\n\ntowardsCent: " ..boids[selectedBoid].gene_rule_towardsFlockCenter
+      stringToShow = stringToShow .. "\n\nalign: " ..boids[selectedBoid].gene_rule_align
+      stringToShow = stringToShow .. "\n\nkeepDist: " ..boids[selectedBoid].gene_rule_keepDistance
+      stringToShow = stringToShow .. "\n\nkeepDist_d: " ..boids[selectedBoid].gene_rule_keepDistance_distance
+      stringToShow = stringToShow .. "\n\navertE: " ..boids[selectedBoid].gene_rule_avertEnemies
+      stringToShow = stringToShow .. "\n\navertE_d: " ..boids[selectedBoid].gene_rule_avertEnemies_distance
+      stringToShow = stringToShow .. "\n\nsearchF: " ..boids[selectedBoid].gene_rule_searchFood
+      stringToShow = stringToShow .. "\n\nsearchF_d: " ..boids[selectedBoid].gene_rule_searchFood_distance
+      stringToShow = stringToShow .. "\n\nsearchE: " ..boids[selectedBoid].gene_rule_searchEggs
+      stringToShow = stringToShow .. "\n\nsearchE_d: " ..boids[selectedBoid].gene_rule_searchEggs_distance
 
 
       local foo = self.text:set(stringToShow)
