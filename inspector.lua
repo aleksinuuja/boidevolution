@@ -100,17 +100,17 @@ function Inspector:draw()
       stringToShow = stringToShow .. "\n\nEnergy: " .. boids[selectedBoid].energy
 
       -- TODO: these should show CHANGE against normal values
-      stringToShow = stringToShow .. "\n\nrandom: " ..boids[selectedBoid].gene_rule_random
-      stringToShow = stringToShow .. "\n\ntowardsCent: " ..boids[selectedBoid].gene_rule_towardsFlockCenter
-      stringToShow = stringToShow .. "\n\nalign: " ..boids[selectedBoid].gene_rule_align
-      stringToShow = stringToShow .. "\n\nkeepDist: " ..boids[selectedBoid].gene_rule_keepDistance
-      stringToShow = stringToShow .. "\n\nkeepDist_d: " ..boids[selectedBoid].gene_rule_keepDistance_distance
-      stringToShow = stringToShow .. "\n\navertE: " ..boids[selectedBoid].gene_rule_avertEnemies
-      stringToShow = stringToShow .. "\n\navertE_d: " ..boids[selectedBoid].gene_rule_avertEnemies_distance
-      stringToShow = stringToShow .. "\n\nsearchF: " ..boids[selectedBoid].gene_rule_searchFood
-      stringToShow = stringToShow .. "\n\nsearchF_d: " ..boids[selectedBoid].gene_rule_searchFood_distance
-      stringToShow = stringToShow .. "\n\nsearchE: " ..boids[selectedBoid].gene_rule_searchEggs
-      stringToShow = stringToShow .. "\n\nsearchE_d: " ..boids[selectedBoid].gene_rule_searchEggs_distance
+      stringToShow = stringToShow .. "\n\nrandom: " ..round(boids[selectedBoid].gene_rule_random, 2) .. "   - diff: " .. round(boids[selectedBoid].gene_rule_random - getNormalValueAsPercentage(gene_rule_random_range, false), 2)
+      stringToShow = stringToShow .. "\ntowardsCent: " ..round(boids[selectedBoid].gene_rule_towardsFlockCenter, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_towardsFlockCenter - getNormalValueAsPercentage(gene_rule_towardsFlockCenter_range, false), 2)
+      stringToShow = stringToShow .. "\nalign: " ..round(boids[selectedBoid].gene_rule_align, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_align - getNormalValueAsPercentage(gene_rule_align_range, false), 2)
+      stringToShow = stringToShow .. "\nkeepDist: " ..round(boids[selectedBoid].gene_rule_keepDistance, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_keepDistance - getNormalValueAsPercentage(gene_rule_keepDistance_range, false), 2)
+      stringToShow = stringToShow .. "\nkeepDist_d: " ..round(boids[selectedBoid].gene_rule_keepDistance_distance, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_keepDistance_distance - getNormalValueAsPercentage(gene_rule_keepDistance_distance_range, false), 2)
+      stringToShow = stringToShow .. "\navertE: " ..round(boids[selectedBoid].gene_rule_avertEnemies, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_avertEnemies - getNormalValueAsPercentage(gene_rule_avertEnemies_range, false), 2)
+      stringToShow = stringToShow .. "\navertE_d: " ..round(boids[selectedBoid].gene_rule_avertEnemies_distance, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_avertEnemies_distance - getNormalValueAsPercentage(gene_rule_avertEnemies_distance_range, false), 2)
+      stringToShow = stringToShow .. "\nsearchF: " ..round(boids[selectedBoid].gene_rule_searchFood, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_searchFood - getNormalValueAsPercentage(gene_rule_searchFood_range, false), 2)
+      stringToShow = stringToShow .. "\nsearchF_d: " ..round(boids[selectedBoid].gene_rule_searchFood_distance, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_searchFood_distance - getNormalValueAsPercentage(gene_rule_searchFood_distance_range, false), 2)
+      stringToShow = stringToShow .. "\nsearchE: " ..round(boids[selectedBoid].gene_rule_searchEggs, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_searchEggs - getNormalValueAsPercentage(gene_rule_searchEggs_range, false), 2)
+      stringToShow = stringToShow .. "\nsearchE_d: " ..round(boids[selectedBoid].gene_rule_searchEggs_distance, 2).. "   - diff: " .. round(boids[selectedBoid].gene_rule_searchEggs_distance - getNormalValueAsPercentage(gene_rule_searchEggs_distance_range, false), 2)
 
 
       local foo = self.text:set(stringToShow)

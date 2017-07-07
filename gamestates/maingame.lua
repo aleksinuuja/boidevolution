@@ -9,6 +9,7 @@ require "slider"
 require "inspector"
 require "foodticker"
 require "rulepercentages"
+require "textlogger"
 
 function gameStates.maingame.initiateState()
   s.resetGame()
@@ -23,6 +24,8 @@ function s.resetGame()
 	boids = {}
   selectedBoid = 0
   isFollowingSelectedBoid = true
+  raceCounter = {0, 0, 0, 0}
+  racesAlive = 0
 
   foodBits = {}
   eggs = {}
@@ -31,7 +34,7 @@ function s.resetGame()
     x = 600,
     y = 10,
     width = 100,
-    valuesUpTo = 40
+    valuesUpTo = 1000
   })
 
   zoomSlider = Slider:new({
@@ -46,18 +49,28 @@ function s.resetGame()
     y = 200
   })
 
+  textLogger = Textlogger:new({
+		maxrows = 3,
+	  rowheight = 20,
+		textsize = 12,
+	  updateSpeed = 3, -- seconds (how often log scrolls on it's own)
+	  x = 10,
+	  y = love.graphics.getHeight() - 100,
+		blinkDuration = 0.050, -- milliseconds how quickly new message blinks
+	  maxBlinks = 3})
+
   -- -- gene value ranges, low - high - normal
-  gene_rule_random_range = {lo=0, hi=10, no=0} -- range 0-10
-  gene_rule_towardsFlockCenter_range = {lo=0, hi=2, no=0.6} -- range 0-2
-  gene_rule_keepDistance_range = {lo=0, hi=2, no=1} -- range 0-2
-  gene_rule_keepDistance_distance_range = {lo=100, hi=2500, no=1000} -- range 100-2500
-  gene_rule_align_range = {lo=0, hi=2, no=1} -- range 0-2
-  gene_rule_avertEnemies_range = {lo=-2, hi=2, no=0.2} -- range -2 - 2
-  gene_rule_avertEnemies_distance_range = {lo=100, hi=5000, no=1000} -- range 100-5000
-  gene_rule_searchFood_range = {lo=0, hi=2, no=0.5} -- range 0-2
-  gene_rule_searchFood_distance_range = {lo=100, hi=5000, no=1000} -- range 100-5000
-  gene_rule_searchEggs_range = {lo=0, hi=2, no=0.5} -- range 0-2
-  gene_rule_searchEggs_distance_range = {lo=100, hi=5000, no=2000} -- range 100-5000
+  gene_rule_random_range = {lo=0, hi=10, no=0, best=0} -- range 0-10
+  gene_rule_towardsFlockCenter_range = {lo=0, hi=2, no=0.6, best=0} -- range 0-2
+  gene_rule_keepDistance_range = {lo=0, hi=2, no=1, best=0} -- range 0-2
+  gene_rule_keepDistance_distance_range = {lo=100, hi=2500, no=500, best=0} -- range 100-2500
+  gene_rule_align_range = {lo=0, hi=2, no=1, best=0} -- range 0-2
+  gene_rule_avertEnemies_range = {lo=-2, hi=2, no=0.2, best=0} -- range -2 - 2
+  gene_rule_avertEnemies_distance_range = {lo=100, hi=5000, no=1000, best=0} -- range 100-5000
+  gene_rule_searchFood_range = {lo=0, hi=2, no=0.5, best=0} -- range 0-2
+  gene_rule_searchFood_distance_range = {lo=100, hi=5000, no=1000, best=0} -- range 100-5000
+  gene_rule_searchEggs_range = {lo=0, hi=2, no=0.5, best=0} -- range 0-2
+  gene_rule_searchEggs_distance_range = {lo=100, hi=5000, no=2000, best=0} -- range 100-5000
 
 
   MaxFoodBits = 2000
@@ -88,6 +101,8 @@ function s.resetGame()
       x = parent.x,
       y = parent.y
     }))
+    if raceCounter[parent.race] == 0 then racesAlive = racesAlive + 1 end
+    raceCounter[parent.race] = raceCounter[parent.race] + 1
   end
 
   function createFood()
@@ -102,6 +117,21 @@ function s.resetGame()
   end
   foodTicker = FoodTicker:new({ tickFunction = createFood })
   for i=1,1000 do createFood() end -- initial food on the map
+
+  initBoids(false)
+end
+
+function initBoids(isPreviousBest)
+  local i
+  if isPreviousBest then
+    for i=1,30 do
+      createBoid(true)
+    end
+  else
+    for i=1,30 do
+      createBoid(false)
+    end
+  end
 end
 
 
@@ -122,6 +152,7 @@ function gameStates.maingame.draw()
 
   -- then reset transformations and draw static overlay graphics such as texts and menus
   love.graphics.pop()
+  textLogger:draw()
   timeScaleSlider:draw()
   zoomSlider:draw()
   inspector:draw()
@@ -131,7 +162,12 @@ function gameStates.maingame.draw()
     .. tostring(timeScale) .. ", Boid count: " .. #boids
     .. ", SCALE: " .. tweenEngine:returnValue("scale")
     .. ", #foodBits: " .. #foodBits, 10, 10)
-  love.graphics.print("scrolloffsetX: " .. tostring(scrolloffsetX) .. ", scrolloffsetY: " .. tostring(scrolloffsetY), 10, 30)
+  love.graphics.print("Red: " .. raceCounter[1]
+    .. ", Yellow: " .. raceCounter[2]
+    .. ", Blue: " .. raceCounter[3]
+    .. ", Green: " .. raceCounter[4]
+    .. ", racesAlive: " .. racesAlive, 10, 30)
+--  love.graphics.print("scrolloffsetX: " .. tostring(scrolloffsetX) .. ", scrolloffsetY: " .. tostring(scrolloffsetY), 10, 30)
 end
 
 
@@ -269,22 +305,7 @@ function gameStates.maingame.update(dt)
 
   if not s.isPaused then
     if love.keyboard.isDown("b") then
-      local race = math.random(4)
-      table.insert(boids, Boid:new({
-        race = race,
-        gene_rule_random = getNormalValueAsPercentage(gene_rule_random_range, true),
-        gene_rule_towardsFlockCenter = getNormalValueAsPercentage(gene_rule_towardsFlockCenter_range, true),
-        gene_rule_keepDistance = getNormalValueAsPercentage(gene_rule_keepDistance_range, true),
-        gene_rule_align = getNormalValueAsPercentage(gene_rule_align_range, true),
-        gene_rule_avertEnemies = getNormalValueAsPercentage(gene_rule_avertEnemies_range, true),
-        gene_rule_keepDistance_distance = getNormalValueAsPercentage(gene_rule_keepDistance_distance_range, true),
-        gene_rule_avertEnemies_distance = getNormalValueAsPercentage(gene_rule_avertEnemies_distance_range, true),
-        gene_rule_searchFood = getNormalValueAsPercentage(gene_rule_searchFood_range, true),
-        gene_rule_searchFood_distance = getNormalValueAsPercentage(gene_rule_searchFood_distance_range, true),
-        gene_rule_searchEggs = getNormalValueAsPercentage(gene_rule_searchEggs_range, true),
-        gene_rule_searchEggs_distance = getNormalValueAsPercentage(gene_rule_searchEggs_distance_range, true),
-        x = math.random()*universe.width,
-        y = math.random()*universe.height}))
+      createBoid(false)
     end
 
 
@@ -296,6 +317,7 @@ function gameStates.maingame.update(dt)
 
     inspector:update()
     foodTicker:update()
+    textLogger:update()
 
     -- update camera position
     if isFollowingSelectedBoid and selectedBoid > 0 then
@@ -316,6 +338,20 @@ function gameStates.maingame.update(dt)
         elseif i < selectedBoid then
           selectedBoid = selectedBoid -1
         end -- bug fix: update index of selected boid
+        raceCounter[o.race] = raceCounter[o.race] - 1
+
+        if raceCounter[o.race] == 0 then
+          racesAlive = racesAlive - 1
+          if o.race == 1 then textLogger:newMessage("Red boids are extinct!", "red") end
+          if o.race == 2 then textLogger:newMessage("Yellow boids are extinct!", "red") end
+          if o.race == 3 then textLogger:newMessage("Blue boids are extinct!", "red") end
+          if o.race == 4 then textLogger:newMessage("Green boids are extinct!", "red") end
+          if racesAlive == 1 then
+            takeWinnerGenes()
+            initBoids(true)
+          end
+
+        end
         table.remove(boids, i)
       end
   	end
@@ -347,6 +383,19 @@ function gameStates.maingame.update(dt)
         if CheckCollision(boid.x-50, boid.y-50, 100, 100, egg.x, egg.y, 50, 50) then
           if boid.race ~= egg.race then
             table.remove(eggs, j)
+            raceCounter[egg.race] = raceCounter[egg.race] - 1
+            if raceCounter[egg.race] == 0 then
+              racesAlive = racesAlive - 1
+              if egg.race == 1 then textLogger:newMessage("Red boids are extinct!", "red") end
+              if egg.race == 2 then textLogger:newMessage("Yellow boids are extinct!", "red") end
+              if egg.race == 3 then textLogger:newMessage("Blue boids are extinct!", "red") end
+              if egg.race == 4 then textLogger:newMessage("Green boids are extinct!", "red") end
+            end
+            if racesAlive == 1 then
+              takeWinnerGenes()
+              initBoids(true)
+            end
+
             boid.energy = boid.energy + 100
             if boid.energy > BoidMaxEnergy then boid.energy = BoidMaxEnergy end
           end
@@ -355,6 +404,68 @@ function gameStates.maingame.update(dt)
     end
 
   end -- is not paused
+end
+
+function takeWinnerGenes()
+  print("The winning race's genes are copied to other races.")
+  textLogger:newMessage("The winning race's genes are copied to other races.", "green")
+  gene_rule_random_range.best = boids[1].gene_rule_random
+  gene_rule_towardsFlockCenter_range.best = boids[1].gene_rule_towardsFlockCenter
+  gene_rule_keepDistance_range.best = boids[1].gene_rule_keepDistance
+  gene_rule_align_range.best = boids[1].gene_rule_align
+  gene_rule_avertEnemies_range.best = boids[1].gene_rule_avertEnemies
+  gene_rule_keepDistance_distance_range.best = boids[1].gene_rule_keepDistance_distance
+  gene_rule_avertEnemies_distance_range.best = boids[1].gene_rule_avertEnemies_distance
+  gene_rule_searchFood_range.best = boids[1].gene_rule_searchFood
+  gene_rule_searchFood_distance_range.best = boids[1].gene_rule_searchFood_distance
+  gene_rule_searchEggs_range.best = boids[1].gene_rule_searchEggs
+  gene_rule_searchEggs_distance_range.best = boids[1].gene_rule_searchEggs_distance
+end
+
+function createBoid(isPreviousBest)
+  local race
+  if not isPreviousBest then
+    race = math.random(4)
+    if raceCounter[race] == 0 then racesAlive = racesAlive + 1 end
+    raceCounter[race] = raceCounter[race] + 1
+    textLogger:newMessage("Created new boid!", "green")
+    table.insert(boids, Boid:new({
+      race = race,
+      gene_rule_random = getNormalValueAsPercentage(gene_rule_random_range, false),
+      gene_rule_towardsFlockCenter = getNormalValueAsPercentage(gene_rule_towardsFlockCenter_range, false),
+      gene_rule_keepDistance = getNormalValueAsPercentage(gene_rule_keepDistance_range, false),
+      gene_rule_align = getNormalValueAsPercentage(gene_rule_align_range, false),
+      gene_rule_avertEnemies = getNormalValueAsPercentage(gene_rule_avertEnemies_range, false),
+      gene_rule_keepDistance_distance = getNormalValueAsPercentage(gene_rule_keepDistance_distance_range, false),
+      gene_rule_avertEnemies_distance = getNormalValueAsPercentage(gene_rule_avertEnemies_distance_range, false),
+      gene_rule_searchFood = getNormalValueAsPercentage(gene_rule_searchFood_range, false),
+      gene_rule_searchFood_distance = getNormalValueAsPercentage(gene_rule_searchFood_distance_range, false),
+      gene_rule_searchEggs = getNormalValueAsPercentage(gene_rule_searchEggs_range, false),
+      gene_rule_searchEggs_distance = getNormalValueAsPercentage(gene_rule_searchEggs_distance_range, false),
+      x = math.random()*universe.width,
+      y = math.random()*universe.height}))
+  else -- use surviving "best" race genes as a base for genes
+    print("now taking the winner genes for a new boid")
+    race = math.random(4)
+    if raceCounter[race] == 0 then racesAlive = racesAlive + 1 end
+    raceCounter[race] = raceCounter[race] + 1
+    textLogger:newMessage("Created new boid!", "green")
+    table.insert(boids, Boid:new({
+      race = race,
+      gene_rule_random = gene_rule_random_range.best,
+      gene_rule_towardsFlockCenter = gene_rule_towardsFlockCenter_range.best,
+      gene_rule_keepDistance = gene_rule_keepDistance_range.best,
+      gene_rule_align = gene_rule_align_range.best,
+      gene_rule_avertEnemies = gene_rule_avertEnemies_range.best,
+      gene_rule_keepDistance_distance = gene_rule_keepDistance_distance_range.best,
+      gene_rule_avertEnemies_distance = gene_rule_avertEnemies_distance_range.best,
+      gene_rule_searchFood = gene_rule_searchFood_range.best,
+      gene_rule_searchFood_distance = gene_rule_searchFood_distance_range.best,
+      gene_rule_searchEggs = gene_rule_searchEggs_range.best,
+      gene_rule_searchEggs_distance = gene_rule_searchEggs_distance_range.best,
+      x = math.random()*universe.width,
+      y = math.random()*universe.height}))
+  end
 end
 
 -- Collision detection taken function from http://love2d.org/wiki/BoundingBox.lua
