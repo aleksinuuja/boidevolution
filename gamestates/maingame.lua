@@ -403,6 +403,42 @@ function gameStates.maingame.update(dt)
       end
     end
 
+    -- boids hitting boids
+    for i, boid in ipairs(boids) do
+      for j=i, #boids do
+        if CheckCollision(boid.x-50, boid.y-50, 100, 100, boids[j].x, boids[j].y, 50, 50) then
+          if boid.race ~= boids[j].race then
+            local lInd, wInd -- lInd = loserIndex, wInd = winnerIndex
+            local diceRoll = math.random(2) -- returns 1 or 2
+            if diceRoll == 1 then
+              lInd = i
+              wInd = j
+            else
+              lInd = j
+              wInd = i
+            end
+            raceCounter[boids[lInd].race] = raceCounter[boids[lInd].race] - 1
+            if raceCounter[boids[lInd].race] == 0 then
+              racesAlive = racesAlive - 1
+              if boids[lInd].race == 1 then textLogger:newMessage("Red boids are extinct!", "red") end
+              if boids[lInd].race == 2 then textLogger:newMessage("Yellow boids are extinct!", "red") end
+              if boids[lInd].race == 3 then textLogger:newMessage("Blue boids are extinct!", "red") end
+              if boids[lInd].race == 4 then textLogger:newMessage("Green boids are extinct!", "red") end
+            end
+            if racesAlive == 1 then
+              takeWinnerGenes()
+              initBoids(true)
+            end
+            boids[lInd].removeMe = true
+
+            local energyAdd = math.max(100, boids[lInd].energy)
+            boids[wInd].energy = boids[wInd].energy + energyAdd
+            if boids[wInd].energy > BoidMaxEnergy then boids[wInd].energy = BoidMaxEnergy end
+          end
+        end
+      end
+    end
+
   end -- is not paused
 end
 
